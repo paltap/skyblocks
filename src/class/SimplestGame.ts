@@ -1,52 +1,20 @@
-import { HexColor } from './common'
-import ShapeDrawer, { Tetromino } from './ShapeDrawer'
+import { HexColor } from '../util/common'
+import { IGame } from './Game'
 
-/**
- * A simple game.
- */
-export interface IGame {
-
-    width: number
-    height: number
-    readonly canvas: HTMLCanvasElement
-
-    /**
-     * Is called once before the game starts to prepare the initial state.
-     */
-    setup(): void
-
-    start?(): void
-
-    /**
-     * Draws the next frame.
-     */
-    step(): void
-}
-
-type GameState = {
+type SimplestGameState = {
     isBlue: boolean
 }
 
-export default class Game implements IGame {
+export class SimplestGame implements IGame {
 
     /* Fields */
 
-    private readonly shapeDrawer: ShapeDrawer
-
     private ticks: number = 0
     private readonly framesTilChange: number = 60
-
-    private state: GameState
-    
+    private state: SimplestGameState
     public isPaused: boolean = false
 
-    constructor(
-        public width: number,
-        public height: number,
-        public readonly canvas: HTMLCanvasElement
-    ) {
-        this.shapeDrawer = new ShapeDrawer(this.canvas)
-
+    constructor(public width: number, public height: number, public readonly canvas: HTMLCanvasElement) {
         this.setup = this.setup.bind(this)
         this.start = this.start.bind(this)
         this.step = this.step.bind(this)

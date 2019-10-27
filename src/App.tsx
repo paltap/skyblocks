@@ -1,40 +1,20 @@
 import React from 'react'
 
-import Game, { IGame } from './util/Game'
+import Game, { IGame } from './class/Game'
+
+import { Dimensions } from './util/common'
+import { getInnerDimensions } from './util'
 
 /**
  * Multiply GAME_RATIO = width / height
  */
-const GAME_RATIO = 2 / 3
-
-type Dimensions = {
-  width: number
-  height: number
-}
+const GAME_RATIO = 0.6
 
 function getGameDimensions(
-  effectiveInnerWidth?: number,
-  effectiveInnerHeight?: number
-): Dimensions {
-  // Disambiguation
-  const innerWidth = effectiveInnerWidth !== undefined ? effectiveInnerWidth : window.innerWidth
-  const innerHeight = effectiveInnerHeight !== undefined ? effectiveInnerHeight : window.innerHeight
-  
-  /* Logic */
-  const hasExtraHeight = innerWidth / innerHeight < GAME_RATIO
-
-  let width
-  let height
-  if (hasExtraHeight) {
-    // Calculate based on width
-    width = innerWidth
-    height = Math.round(width / GAME_RATIO)
-  } else {
-    // Calculate based on height
-    height = innerHeight
-    width = Math.round(height * GAME_RATIO)
-  }
-  return { width, height }
+  width: number = window.innerWidth,
+  height: number = window.innerHeight,
+) {
+  return getInnerDimensions(width, height, GAME_RATIO)
 }
 
 type AppProps = {}

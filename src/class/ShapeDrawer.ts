@@ -1,6 +1,6 @@
-import { HexColor, Point } from './common'
+import { HexColor, Point } from '../util/common'
 
-export enum Tetromino {
+export enum Skyblock {
     // Free blocks
 
     /** Straight polyomino. Four blocks in a straight line. */
@@ -29,23 +29,23 @@ export enum Tetromino {
     Z = 'Z',
 }
 
-export const DEFAULT_TETROMINO_COLORS: Record<Tetromino, HexColor> = {
-    [Tetromino.I]: 'cyan',
-    [Tetromino.O]: 'yellow',
-    [Tetromino.T]: 'magenta',
-    [Tetromino.J]: 'blue',
-    [Tetromino.L]: 'orange',
-    [Tetromino.S]: 'green',
-    [Tetromino.Z]: 'red',
+export const DEFAULT_SKYBLOCK_COLORS: Record<Skyblock, HexColor> = {
+    [Skyblock.I]: 'cyan',
+    [Skyblock.O]: 'yellow',
+    [Skyblock.T]: 'magenta',
+    [Skyblock.J]: 'blue',
+    [Skyblock.L]: 'orange',
+    [Skyblock.S]: 'green',
+    [Skyblock.Z]: 'red',
 }
 
 export interface IShapeDrawer {
 
     readonly canvas: HTMLCanvasElement
 
-    readonly tetrominoColors: Record<Tetromino, HexColor>
+    readonly skyblockColors: Record<Skyblock, HexColor>
 
-    drawTetromino(tetromino: Tetromino): void
+    drawSkyblock(skyblock: Skyblock): void
 
     // ...more coming
 }
@@ -54,12 +54,12 @@ export default class ShapeDrawer implements IShapeDrawer {
 
     constructor(
         readonly canvas: HTMLCanvasElement,
-        readonly tetrominoColors: Record<Tetromino, HexColor> = DEFAULT_TETROMINO_COLORS
+        readonly skyblockColors: Record<Skyblock, HexColor> = DEFAULT_SKYBLOCK_COLORS
     ) {
-        this.drawTetromino = this.drawTetromino.bind(this)
+        this.drawSkyblock = this.drawSkyblock.bind(this)
     }
 
-    drawTetromino(tetromino: Tetromino, point: Point = { x: 0, y: 0 }): any {
-        console.log(this.tetrominoColors[tetromino])
+    drawSkyblock(skyblock: Skyblock, point: Point = { x: 0, y: 0 }): any {
+        console.log(this.skyblockColors[skyblock])
     }
 }
