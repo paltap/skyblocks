@@ -12,6 +12,8 @@ export interface IGame {
      */
     setup(): void
 
+    start?(): void
+
     /**
      * Draws the next frame.
      */
@@ -43,6 +45,7 @@ export class SimplestGame implements IGame {
 
     constructor(public width: number, public height: number, public readonly canvas: HTMLCanvasElement) {
         this.setup = this.setup.bind(this)
+        this.start = this.start.bind(this)
         this.step = this.step.bind(this)
 
         this.state = {
@@ -54,6 +57,11 @@ export class SimplestGame implements IGame {
         console.log('setup')
         console.log(this)
         console.log({ width: this.width, height: this.height })
+    }
+
+    public start(): void {
+        // TODO: Initialize state here
+        this.step()
     }
 
     public step(): void {

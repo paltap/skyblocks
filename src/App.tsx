@@ -43,26 +43,69 @@ const MyCanvas: React.FC<MyCanvasProps> = ({ width, height }) => {
 //   );
 // }
 
+/**
+ * Multiply GAME_RATIO = width / height
+ */
+const GAME_RATIO = 2 / 3
 
-export default class App extends React.Component {
+type Dimensions = {
+  width: number
+  height: number
+}
+
+function getGameDimensions(
+  effectiveInnerWidth?: number,
+  effectiveInnerHeight?: number
+): Dimensions {
+  // Disambiguation
+  const innerWidth = effectiveInnerWidth !== undefined ? effectiveInnerWidth : window.innerWidth
+  const innerHeight = effectiveInnerHeight !== undefined ? effectiveInnerHeight : window.innerHeight
+  
+  /* Logic */
+  const hasExtraHeight = innerWidth / innerHeight < GAME_RATIO
+
+  let width
+  let height
+  if (hasExtraHeight) {
+    // Calculate based on width
+    width = innerWidth
+    height = Math.round(width / GAME_RATIO)
+  } else {
+    // Calculate based on height
+    height = innerHeight
+    width = Math.round(height * GAME_RATIO)
+  }
+  return { width, height }
+}
+
+type AppProps = {}
+
+
+export default class App extends React.Component<AppProps> {
 
   private game: IGame
 
-  constructor(props: any) {
+  private idealDimensions: Dimensions
+
+  constructor(props: AppProps) {
     super(props)
+    
+    const dimensions = getGameDimensions(window.innerWidth - 30, window.innerHeight - 30)
+    this.idealDimensions = dimensions
+    const { width, height } = dimensions
 
     const canvasElement = document.createElement('canvas')
-    canvasElement.width = 600
-    canvasElement.height = 900
+    canvasElement.width = width
+    canvasElement.height = height
 
-    this.game = new SimplestGame(600, 900, canvasElement)
+    this.game = new SimplestGame(width, height, canvasElement)
     this.game.setup()
   }
 
   componentDidMount() {
-    this.game.step()
+    (this.game.start || this.game.step)()
 
-    const header = document.getElementById('header')
+    const header = document.getElementById('game')
     header!.appendChild(this.game.canvas)
   }
 
@@ -71,22 +114,8 @@ export default class App extends React.Component {
     const { game } = this
   
     return (
-      <div className="App">
-        <header className="App-header" id="header">
-          <img src={logo} className="App-logo" alt="logo" />
-          <p>
-            Edit <code>src/App.tsx</code> and save to reload.
-          </p>
-          <a
-            className="App-link"
-            href="https://reactjs.org"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Learn React
-          </a>
-  
-        </header>
+      <div className="gameWrapper" style={{ width: '100vw' }}>
+        <div id="game" style={{ width: this.idealDimensions.width, margin: '0 auto' }} />
       </div>
     );
   }
