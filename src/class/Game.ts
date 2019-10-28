@@ -1,6 +1,6 @@
-import { range } from 'ramda'
+import { clone, range, without } from 'ramda'
 
-import { HexColor, Point, Position } from '../util/common'
+import { HexColor, Point, Position, pickEnum } from '../util/common'
 import ShapeDrawer, { Skyblock, DEFAULT_SKYBLOCK_COLORS } from './ShapeDrawer'
 import { getInnerDimensions } from '../util'
 
@@ -53,6 +53,16 @@ type GridSettings = {
     skyblockColors: Record<Skyblock, HexColor>
 }
 
+const SKYBLOCK_DIRECTORY: Record<Skyblock, Point[]> = {
+    [Skyblock.I]: [{ x: 0, y: 0 }, { x: 1, y: 0 }, { x: 2, y: 0 }, { x: 3, y: 0 }],
+    [Skyblock.O]: [{ x: 0, y: 0 }, { x: 1, y: 0 }, { x: 0, y: 1 }, { x: 1, y: 1 }],
+    [Skyblock.T]: [{ x: 1, y: 0 }, { x: 0, y: 1 }, { x: 1, y: 1 }, { x: 2, y: 1 }],
+    [Skyblock.J]: [{ x: 0, y: 0 }, { x: 0, y: 1 }, { x: 1, y: 1 }, { x: 2, y: 1 }],
+    [Skyblock.L]: [{ x: 2, y: 0 }, { x: 0, y: 1 }, { x: 1, y: 1 }, { x: 2, y: 1 }],
+    [Skyblock.S]: [{ x: 1, y: 0 }, { x: 2, y: 0 }, { x: 0, y: 1 }, { x: 1, y: 1 }],
+    [Skyblock.Z]: [{ x: 0, y: 0 }, { x: 1, y: 0 }, { x: 1, y: 1 }, { x: 2, y: 1 }],
+}
+
 class Grid {
 
     readonly canvasWidth: number
@@ -71,13 +81,17 @@ class Grid {
     }
 
     private readonly gridSkyblocks: GridSkyblock[] = [
-        {
-            type: Skyblock.I,
-            orientation: Orientation.UP,
-            position: { x: 0, y: 0 },
-            tiles: [{ x: 0, y: 0 }, { x: 1, y: 0 }, { x: 2, y: 0 }, { x: 3, y: 0 }]
-        }
+        // {
+        //     type: Skyblock.I,
+        //     orientation: Orientation.UP,
+        //     position: { x: 0, y: 0 },
+        //     tiles: [{ x: 0, y: 0 }, { x: 1, y: 0 }, { x: 2, y: 0 }, { x: 3, y: 0 }]
+        // }
     ]
+    
+    // TODO: Delete this counter.
+    // private counter: number = 0
+    // private currentRandomSkyblock: Skyblock
 
     constructor(
         readonly canvas: CanvasEl,
@@ -95,6 +109,10 @@ class Grid {
         this.render()
 
         console.log(this.canvas)
+
+        // this.currentRandomSkyblock = pickEnum(Skyblock)
+        // console.log(this.currentRandomSkyblock)
+        this.addSkyblock()
     }
 
     public render(): void {
@@ -106,18 +124,59 @@ class Grid {
         }
     }
 
+    public addSkyblock({ type }: Partial<GridSkyblock> = {}): GridSkyblock {
+        console.log('new block')
+        console.log(this.gridSkyblocks)
+
+        const newType = type || pickEnum(Skyblock)
+
+        // console.log(range(0, 100).map((_) => pickEnum(Skyblock)))
+
+        const tiles = clone(SKYBLOCK_DIRECTORY[newType])
+            || [{ x: 0, y: 0 }, { x: 1, y: 0 }, { x: 2, y: 0 }, { x: 3, y: 0 }]
+
+
+        const gridblock: GridSkyblock = {
+            type: newType,
+            orientation: Orientation.UP,
+            position: { x: 0, y: 0 },
+            // tiles: [{ x: 0, y: 0 }, { x: 1, y: 0 }, { x: 2, y: 0 }, { x: 3, y: 0 }]
+            // tiles: SKYBLOCK_DIRECTORY[newType]
+            tiles,
+        }
+        this.gridSkyblocks.push(gridblock)
+        return gridblock
+    }
+
     /**
      * Takes the next turn.
      * The player's tetris block will fall.
      */
     public progress(): void {
-        if (this.gridSkyblocks.length >= 1) {
-            const gridblock = this.gridSkyblocks[0]
-            const canFall = (gridblock.tiles.every((tile) => 
-                tile.y < (Grid.numTilesHigh - 1)
-            ))
+        // if (this.gridSkyblocks.length >= 1) {
+        //     const gridblock = this.gridSkyblocks[0]
+        //     const canFall = (gridblock.tiles.every((tile) => 
+        //         tile.y < (Grid.numTilesHigh - 1)
+        //     ))
 
-            // console.log({ canFall })
+        //     // console.log({ canFall })
+        //     if (canFall) {
+        //         for (const tile of gridblock.tiles) {
+        //             // console.log(tile.y)
+        //             tile.y += 1;
+        //         }
+        //     } else {
+        //         this.addSkyblock()
+        //     }
+        // }
+
+        // const checkCanFall = (gridblock: GridSkyblock) =>
+        //     gridblock.tiles.every((tile) =>
+        //         tile.y < (Grid.numTilesHigh - 1))
+
+        for (const gridblock of this.gridSkyblocks) {
+            const canFall = this.checkCanFall(gridblock)
+
             if (canFall) {
                 for (const tile of gridblock.tiles) {
                     // console.log(tile.y)
@@ -125,7 +184,32 @@ class Grid {
                 }
             }
         }
+
+        if (this.checkStable()) {
+            const gridblock = this.addSkyblock()
+            const color = this.gridSettings.skyblockColors[gridblock.type]
+            console.log({ color })
+        }
     }
+
+    private checkCanFall = (gridblock: GridSkyblock): boolean => {
+        const gridblocks = without([gridblock], this.gridSkyblocks)
+        // console.log('AAA')
+        // console.log(gridblocks)
+        return (
+            gridblock.tiles.every((tile) => (
+                (tile.y < (Grid.numTilesHigh - 1)) &&
+                !(gridblocks.some(({ tiles: otherTiles }) => 
+                    otherTiles.some((otherTile) => 
+                        tile.y + 1 === otherTile.y
+                    )
+                ))
+            ))
+        )
+    }
+
+    private checkStable = (): boolean =>
+        !this.gridSkyblocks.some(this.checkCanFall)
 
     /* Render functions */
     
@@ -154,6 +238,10 @@ class Grid {
         ctx.strokeStyle = 'white'
         for (const { type, orientation, position, tiles } of this.gridSkyblocks) {
             const color = this.gridSettings.skyblockColors[type]
+
+            if (!color) {
+                console.log({ type, tiles, color })
+            }
             ctx.fillStyle = color
 
             for (const { x, y } of tiles) {
@@ -163,6 +251,26 @@ class Grid {
                 ctx.strokeRect(tileCorner.x, tileCorner.y, tileSize, tileSize)
             }
         }
+
+
+
+        // const type = this.currentRandomSkyblock
+        // const fillStyle = this.gridSettings.skyblockColors[type]
+        // ctx.fillStyle = fillStyle
+
+        // const points = SKYBLOCK_DIRECTORY[type]
+
+        // // if (typeof points !== 'object') {
+        // //     console.log({ points, type })
+        // // }
+        // if (points) {
+        //     for (const { x, y } of points) {
+        //         const tileCorner = this.getTileCorner({ x, y })
+        //         ctx.fillRect(tileCorner.x, tileCorner.y, tileSize, tileSize)
+        //         ctx.strokeRect(tileCorner.x, tileCorner.y, tileSize, tileSize)
+        //     }
+        // }
+
         ctx.fill()
     }
 
@@ -193,7 +301,7 @@ export default class Game implements IGame {
     private readonly shapeDrawer: ShapeDrawer
 
     private ticks: number = 0
-    private readonly framesTilChange: number = 60
+    private readonly framesTilChange: number = 15
 
     private state: GameState
     
@@ -279,6 +387,6 @@ export default class Game implements IGame {
         }
     }
 
-    private paintBlue = () => this.paint('#0000ff')
-    private paintRed = () => this.paint(`#ff0000`)
+    private paintBlue = () => this.paint('#000077')
+    private paintRed = () => this.paint(`#990000`)
 }
