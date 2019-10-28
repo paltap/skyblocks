@@ -1,7 +1,8 @@
-import { HexColor } from '../util/common'
-import ShapeDrawer, { Skyblock } from './ShapeDrawer'
-import { getInnerDimensions } from '../util'
 import { range } from 'ramda'
+
+import { HexColor, Point, Position } from '../util/common'
+import ShapeDrawer, { Skyblock, DEFAULT_SKYBLOCK_COLORS } from './ShapeDrawer'
+import { getInnerDimensions } from '../util'
 
 type CanvasEl = HTMLCanvasElement
 
@@ -31,15 +32,48 @@ type GameState = {
     isBlue: boolean
 }
 
+type GridSkyblockState = {}
+
+enum Orientation {
+    UP,
+    LEFT,
+    DOWN,
+    RIGHT,
+}
+
+type GridSkyblock = {
+    type: Skyblock
+    orientation: Orientation
+    position: Point
+    tiles: Point[]
+}
+
+type GridSettings = {
+    skyblockColors: Record<Skyblock, HexColor>
+}
+
 class Grid {
 
     /** Grid total width, in px. */
-    width: number
+    readonly width: number
     /** Grid total height, in px. */
-    height: number
+    readonly height: number
 
-    public static numTilesWide = 10
-    public static numTilesHigh = 20
+    public static readonly numTilesWide = 10
+    public static readonly numTilesHigh = 20
+
+    private readonly gridSettings: GridSettings = {
+        skyblockColors: DEFAULT_SKYBLOCK_COLORS,
+    }
+
+    private readonly gridSkyblocks: GridSkyblock[] = [
+        {
+            type: Skyblock.I,
+            orientation: Orientation.UP,
+            position: { x: 0, y: 0 },
+            tiles: [{ x: 0, y: 0 }, { x: 1, y: 0 }, { x: 2, y: 0 }, { x: 3, y: 0 }]
+        }
+    ]
 
     constructor(
         readonly canvas: CanvasEl,
@@ -51,50 +85,94 @@ class Grid {
         this.width = width
         this.height = height
 
-        console.log({ tileSize: this.getTileSize() })
-
-        // for (const gx of range(0, Grid.numTilesWide)) {
-        //     for (const gy of range(0, Grid.numTilesHigh)) {
-        //         console.log({ gx, gy })
-        //     }
-        // }
-
         this.render()
     }
 
-    getTileSize = () => Number((this.width / Grid.numTilesWide).toFixed(0))
-
-    public render() {
+    public render(): void {
         const gridContext = this.canvas.getContext('2d')
-
-        this.renderGrid(gridContext!)
+        if (gridContext) {
+            this.renderGrid(gridContext)
+            this.renderSkyblocks(gridContext)
+        }
     }
-    
-    private renderGrid(ctx: CanvasRenderingContext2D) {
-        const tileSize = this.getTileSize()
 
-        const start = { x: 1, y: 1 }
+    /**
+     * Takes the next turn.
+     * The player's tetris block will fall.
+     */
+    public progress(): void {
+        if (this.gridSkyblocks.length >= 1) {
+            const gridblock = this.gridSkyblocks[0]
+            const canFall = (gridblock.tiles.every((tile) => 
+                tile.y < (Grid.numTilesHigh - 1)
+            ))
+
+            console.log({ canFall })
+            if (canFall) {
+                for (const tile of gridblock.tiles) {
+                    console.log(tile.y)
+                    tile.y += 1;
+                }
+            }
+        }
+    }
+
+    /* Render functions */
+    
+    private renderGrid(ctx: CanvasRenderingContext2D): void {
+        const tileSize = this.getTileSize()
+        const start = this.getStart()
 
         ctx.beginPath()
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)'
+
         for (const gx of range(0, Grid.numTilesWide)) {
             for (const gy of range(0, Grid.numTilesHigh)) {
-                const tileStart = { x: start.x + (gx * tileSize), y: start.y + (gy * tileSize) }
-
-                ctx.moveTo(tileStart.x, tileStart.y)
+                const tileStart = this.getTileCorner({ x: gx, y: gy })
                 ctx.strokeRect(tileStart.x, tileStart.y, tileSize, tileSize)
             }
         }
-        ctx.stroke()
 
-        // const ctx = this.canvas.getContext('2d')
-        // if (ctx) {
-        //     ctx.fillStyle = '#00ff00'
-        //     ctx.fillRect(0, 0, this.width, this.height)
-        // }
+        ctx.stroke()
     }
 
+    private renderSkyblocks(ctx: CanvasRenderingContext2D): void {
+        const start = this.getStart()
+        const tileSize = this.getTileSize()
 
+        ctx.beginPath()
+        ctx.strokeStyle = 'white'
+        for (const { type, orientation, position, tiles } of this.gridSkyblocks) {
+            const color = this.gridSettings.skyblockColors[type]
+            ctx.fillStyle = color
 
+            for (const { x, y } of tiles) {
+                console.log({ x, y })
+                const tileCorner = this.getTileCorner({ x, y })
+                ctx.fillRect(tileCorner.x, tileCorner.y, tileSize, tileSize)
+                ctx.strokeRect(tileCorner.x, tileCorner.y, tileSize, tileSize)
+            }
+        }
+        ctx.fill()
+    }
+
+    /* Helpers */
+
+    public getStart = (): Point => ({ 
+        x: (this.canvas.width - this.width) / 2,
+        y: (this.canvas.height - this.height) / 2,
+    })
+
+    /**
+     * @returns The Point, in pixels, of the top left corner of the specified tile.
+     */
+    public getTileCorner = (tile: Point): Point => ({
+        x: this.getStart().x + (tile.x * this.getTileSize()),
+        y: this.getStart().y + (tile.y * this.getTileSize()),
+    })
+
+    public getTileSize = () =>
+        Number((this.width / Grid.numTilesWide).toFixed(0))
 }
 
 export default class Game implements IGame {
@@ -137,32 +215,37 @@ export default class Game implements IGame {
     public start(): void {
         // TODO: Initialize state here
         this.paintBlue()
-        this.grid.render()
-        // this.step()
+        this.step()
     }
 
     public step(): void {
-        console.log('step')
+        if (this.isPaused === true) {
+            return
+        }
 
+        this.grid.render()
+
+        
         this.ticks += 1
-
         if (this.ticks > this.framesTilChange) {
-            console.log('Flip')
             this.ticks = 0
-            if (this.state.isBlue) {
-                this.paintRed()
-                this.state.isBlue = false
-            } else {
-                this.paintBlue()
-                this.state.isBlue = true
-            }
+            this.progress()
         }
 
-        // this.grid.render()
+        requestAnimationFrame(this.step)
+    }
 
-        if (!this.isPaused) {
-            requestAnimationFrame(this.step)
-        }
+    public progress(): void {
+        console.log('progress')
+        this.grid.progress()
+
+        // if (this.state.isBlue) {
+        //     this.paintRed()
+        //     this.state.isBlue = false
+        // } else {
+        //     this.paintBlue()
+        //     this.state.isBlue = true
+        // }
     }
 
     private paint(color: HexColor) {

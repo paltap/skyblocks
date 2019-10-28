@@ -5,6 +5,10 @@ export type Point = {
     y: number
 }
 
+export type Position = Point
+
+export type Coordinate = [number, number]
+
 export type Dimensions = {
     width: number
     height: number
