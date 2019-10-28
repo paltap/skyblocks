@@ -31,6 +31,9 @@ export default class CanvasStack extends React.Component<CanvasStackProps> {
         this.parentRef = React.createRef()
     }
 
+    getCanvases = (): HTMLCanvasElement[] =>
+        this.canvases
+
     componentDidMount() {
         const ref = this.parentRef.current
         const startingZIndex = this.props.zIndex || 0

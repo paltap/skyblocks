@@ -22,7 +22,9 @@ type AppProps = {}
 
 export default class App extends React.Component<AppProps> {
 
-  private game: IGame
+  private canvasStackRef: React.RefObject<CanvasStack>
+
+  private game: IGame | null = null
 
   private idealDimensions: Dimensions
 
@@ -31,43 +33,44 @@ export default class App extends React.Component<AppProps> {
     
     const dimensions = getGameDimensions(window.innerWidth - 30, window.innerHeight - 30)
     this.idealDimensions = dimensions
-    const { width, height } = dimensions
 
-    const canvasElement = document.createElement('canvas')
-    canvasElement.width = width
-    canvasElement.height = height
+    // const canvasElement = document.createElement('canvas')
+    // canvasElement.width = width
+    // canvasElement.height = height
 
-    this.game = new Game(width, height, canvasElement)
-    this.game.setup()
+    this.canvasStackRef = React.createRef()
   }
 
   componentDidMount() {
-    (this.game.start || this.game.step)()
+    const canvasStack = this.canvasStackRef.current
+    if (canvasStack) {
+      const canvases = canvasStack.getCanvases()
+      const { width, height } = this.idealDimensions
+      this.game = new Game(width, height, canvases)
 
-    const header = document.getElementById('game')
-    header!.appendChild(this.game.canvas)
+      ;(this.game.start || this.game.step)()
+    }
   }
 
   render() {
+    const { width, height } = this.idealDimensions
 
-    const { game } = this
-  
     return (
       <>
         <div className="gameWrapper" style={{ width: '100vw' }}>
-          {/* <div id="game" style={{ width: this.idealDimensions.width, margin: '0 auto' }} /> */}
-
-          <CanvasStack 
+          <CanvasStack
+            ref={this.canvasStackRef}
             id="game"
             style={{
-              width: this.idealDimensions.width,
+              width,
+              height,
               margin: '0 auto'
             }}
             
             superId="gameCanvas"
             num={2}
-            width={450}
-            height={900}
+            width={width}
+            height={height}
           />
         </div>
       </>

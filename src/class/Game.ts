@@ -13,7 +13,8 @@ export interface IGame {
 
     width: number
     height: number
-    readonly canvas: CanvasEl
+    readonly canvas?: CanvasEl
+    readonly canvases?: CanvasEl[]
 
     /**
      * Is called once before the game starts to prepare the initial state.
@@ -189,11 +190,22 @@ export default class Game implements IGame {
     
     public isPaused: boolean = false
 
+    /**
+     * Temporary.
+     */
+    public readonly canvas: CanvasEl
+
     constructor(
         public width: number,
         public height: number,
-        public readonly canvas: CanvasEl
+        public readonly canvases: CanvasEl[]
     ) {
+        if (canvases.length > 0) {
+            this.canvas = canvases[0]
+        } else {
+            this.canvas = document.createElement('canvas')
+        }
+
         this.grid = new Grid(this.canvas)
         this.shapeDrawer = new ShapeDrawer(this.canvas)
 
