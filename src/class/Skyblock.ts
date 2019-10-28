@@ -1,4 +1,4 @@
-import { HexColor, Point } from '../util/common'
+import { HexColor } from '../util/common'
 
 export enum Skyblock {
     // Free blocks
@@ -37,29 +37,4 @@ export const DEFAULT_SKYBLOCK_COLORS: Record<Skyblock, HexColor> = {
     [Skyblock.L]: 'orange',
     [Skyblock.S]: 'green',
     [Skyblock.Z]: 'red',
-}
-
-export interface IShapeDrawer {
-
-    readonly canvas: HTMLCanvasElement
-
-    readonly skyblockColors: Record<Skyblock, HexColor>
-
-    drawSkyblock(skyblock: Skyblock): void
-
-    // ...more coming
-}
-
-export default class ShapeDrawer implements IShapeDrawer {
-
-    constructor(
-        readonly canvas: HTMLCanvasElement,
-        readonly skyblockColors: Record<Skyblock, HexColor> = DEFAULT_SKYBLOCK_COLORS
-    ) {
-        this.drawSkyblock = this.drawSkyblock.bind(this)
-    }
-
-    drawSkyblock(skyblock: Skyblock, point: Point = { x: 0, y: 0 }): any {
-        console.log(this.skyblockColors[skyblock])
-    }
 }

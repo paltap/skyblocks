@@ -1,5 +1,12 @@
 export type HexColor = string
 
+export enum Orientation {
+    UP,
+    LEFT,
+    DOWN,
+    RIGHT,
+}
+
 export type Point = {
     x: number
     y: number
