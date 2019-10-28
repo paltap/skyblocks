@@ -107,10 +107,10 @@ class Grid {
                 tile.y < (Grid.numTilesHigh - 1)
             ))
 
-            console.log({ canFall })
+            // console.log({ canFall })
             if (canFall) {
                 for (const tile of gridblock.tiles) {
-                    console.log(tile.y)
+                    // console.log(tile.y)
                     tile.y += 1;
                 }
             }
@@ -147,7 +147,7 @@ class Grid {
             ctx.fillStyle = color
 
             for (const { x, y } of tiles) {
-                console.log({ x, y })
+                // console.log({ x, y })
                 const tileCorner = this.getTileCorner({ x, y })
                 ctx.fillRect(tileCorner.x, tileCorner.y, tileSize, tileSize)
                 ctx.strokeRect(tileCorner.x, tileCorner.y, tileSize, tileSize)

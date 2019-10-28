@@ -2,6 +2,7 @@ import React from 'react'
 
 import Game, { IGame } from './class/Game'
 
+import CanvasStack from './util/CanvasStack'
 import { Dimensions } from './util/common'
 import { getInnerDimensions } from './util'
 
@@ -18,7 +19,6 @@ function getGameDimensions(
 }
 
 type AppProps = {}
-
 
 export default class App extends React.Component<AppProps> {
 
@@ -53,9 +53,24 @@ export default class App extends React.Component<AppProps> {
     const { game } = this
   
     return (
-      <div className="gameWrapper" style={{ width: '100vw' }}>
-        <div id="game" style={{ width: this.idealDimensions.width, margin: '0 auto' }} />
-      </div>
+      <>
+        <div className="gameWrapper" style={{ width: '100vw' }}>
+          {/* <div id="game" style={{ width: this.idealDimensions.width, margin: '0 auto' }} /> */}
+
+          <CanvasStack 
+            id="game"
+            style={{
+              width: this.idealDimensions.width,
+              margin: '0 auto'
+            }}
+            
+            superId="gameCanvas"
+            num={2}
+            width={450}
+            height={900}
+          />
+        </div>
+      </>
     );
   }
 }
