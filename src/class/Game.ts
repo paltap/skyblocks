@@ -55,6 +55,9 @@ type GridSettings = {
 
 class Grid {
 
+    readonly canvasWidth: number
+    readonly canvasHeight: number
+
     /** Grid total width, in px. */
     readonly width: number
     /** Grid total height, in px. */
@@ -81,17 +84,23 @@ class Grid {
     ) {
         const ratio = Grid.numTilesWide / Grid.numTilesHigh
 
+        this.canvasWidth = canvas.width
+        this.canvasHeight = canvas.height
+
         const { width, height } = getInnerDimensions(canvas.width, canvas.height, ratio)
 
         this.width = width
         this.height = height
 
         this.render()
+
+        console.log(this.canvas)
     }
 
     public render(): void {
         const gridContext = this.canvas.getContext('2d')
         if (gridContext) {
+            gridContext.clearRect(0, 0, this.canvasWidth, this.canvasHeight)
             this.renderGrid(gridContext)
             this.renderSkyblocks(gridContext)
         }
@@ -193,21 +202,23 @@ export default class Game implements IGame {
     /**
      * Temporary.
      */
-    public readonly canvas: CanvasEl
+    public readonly uiCanvas: CanvasEl
+    public readonly gridCanvas: CanvasEl
 
     constructor(
         public width: number,
         public height: number,
         public readonly canvases: CanvasEl[]
     ) {
-        if (canvases.length > 0) {
-            this.canvas = canvases[0]
+        if (canvases.length >= 2) {
+            this.uiCanvas = canvases[0]
+            this.gridCanvas = canvases[1]
         } else {
-            this.canvas = document.createElement('canvas')
+            throw new Error(`Game canvas array must be at least length 2`)
         }
 
-        this.grid = new Grid(this.canvas)
-        this.shapeDrawer = new ShapeDrawer(this.canvas)
+        this.grid = new Grid(this.gridCanvas)
+        this.shapeDrawer = new ShapeDrawer(this.uiCanvas)
 
         this.setup = this.setup.bind(this)
         this.start = this.start.bind(this)
@@ -261,7 +272,7 @@ export default class Game implements IGame {
     }
 
     private paint(color: HexColor) {
-        const ctx = this.canvas.getContext('2d')
+        const ctx = this.uiCanvas.getContext('2d')
         if (ctx !== null) {
             ctx.fillStyle = color
             ctx.fillRect(0, 0, this.width, this.height)
